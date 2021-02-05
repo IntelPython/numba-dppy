@@ -15,7 +15,7 @@
 import numba_dppy.dpnp_glue.dpnpimpl as dpnp_ext
 from numba import types
 from numba.core.typing import signature
-from . import stubs
+from numba_dppy.numpy import stubs
 import numba_dppy.dpnp_glue as dpnp_lowering
 from numba.core.extending import overload, register_jitable
 import numpy as np
@@ -49,7 +49,7 @@ def common_impl(a, out, dpnp_func, print_debug):
         print("dpnp implementation")
 
 
-@overload(stubs.dpnp.sum)
+@overload(stubs.numpy.sum)
 def dpnp_sum_impl(a):
     name = "sum"
     dpnp_lowering.ensure_dpnp(name)
@@ -77,7 +77,7 @@ def dpnp_sum_impl(a):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.prod)
+@overload(stubs.numpy.prod)
 def dpnp_prod_impl(a):
     name = "prod"
     dpnp_lowering.ensure_dpnp(name)
@@ -104,7 +104,7 @@ def dpnp_prod_impl(a):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.nansum)
+@overload(stubs.numpy.nansum)
 def dpnp_nansum_impl(a):
     name = "nansum"
     dpnp_lowering.ensure_dpnp(name)
@@ -119,7 +119,7 @@ def dpnp_nansum_impl(a):
             if np.isnan(a_copy[i]):
                 a_copy[i] = 0
 
-        result = numba_dppy.dpnp.sum(a_copy)
+        result = numba_dppy.numpy.sum(a_copy)
         dpnp_ext._dummy_liveness_func([a_copy.size])
 
         if PRINT_DEBUG:
@@ -130,7 +130,7 @@ def dpnp_nansum_impl(a):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.nanprod)
+@overload(stubs.numpy.nanprod)
 def dpnp_nanprod_impl(a):
     name = "nanprod"
     dpnp_lowering.ensure_dpnp(name)
@@ -145,7 +145,7 @@ def dpnp_nanprod_impl(a):
             if np.isnan(a_copy[i]):
                 a_copy[i] = 1
 
-        result = numba_dppy.dpnp.prod(a_copy)
+        result = numba_dppy.numpy.prod(a_copy)
         dpnp_ext._dummy_liveness_func([a_copy.size])
 
         if PRINT_DEBUG:

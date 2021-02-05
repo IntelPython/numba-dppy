@@ -15,7 +15,7 @@
 import numba_dppy.dpnp_glue.dpnpimpl as dpnp_ext
 from numba import types
 from numba.core.typing import signature
-from . import stubs
+from numba_dppy.numpy import stubs
 import numba_dppy.dpnp_glue as dpnp_lowering
 from numba.core.extending import overload, register_jitable
 import numpy as np
@@ -183,10 +183,10 @@ def common_impl_multivariate_normal(
         print("dpnp implementation")
 
 
-@overload(stubs.dpnp.random)
-@overload(stubs.dpnp.sample)
-@overload(stubs.dpnp.ranf)
-@overload(stubs.dpnp.random_sample)
+@overload(stubs.numpy.random)
+@overload(stubs.numpy.sample)
+@overload(stubs.numpy.ranf)
+@overload(stubs.numpy.random_sample)
 def dpnp_random_impl(size):
     name = "random_sample"
     dpnp_lowering.ensure_dpnp(name)
@@ -216,7 +216,7 @@ def dpnp_random_impl(size):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.rand)
+@overload(stubs.numpy.rand)
 def dpnp_random_impl(*size):
     name = "random_sample"
     dpnp_lowering.ensure_dpnp(name)
@@ -246,7 +246,7 @@ def dpnp_random_impl(*size):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.randint)
+@overload(stubs.numpy.randint)
 def dpnp_random_impl(low, high=None, size=None):
     name = "random_sample"
     dpnp_lowering.ensure_dpnp("randint")
@@ -302,7 +302,7 @@ def dpnp_random_impl(low, high=None, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.random_integers)
+@overload(stubs.numpy.random_integers)
 def dpnp_random_impl(low, high=None, size=None):
     name = "random_sample"
     dpnp_lowering.ensure_dpnp("random_integers")
@@ -358,7 +358,7 @@ def dpnp_random_impl(low, high=None, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.beta)
+@overload(stubs.numpy.beta)
 def dpnp_random_impl(a, b, size=None):
     name = "beta"
     dpnp_lowering.ensure_dpnp(name)
@@ -401,7 +401,7 @@ def dpnp_random_impl(a, b, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.binomial)
+@overload(stubs.numpy.binomial)
 def dpnp_random_impl(n, p, size=None):
     name = "binomial"
     dpnp_lowering.ensure_dpnp(name)
@@ -444,7 +444,7 @@ def dpnp_random_impl(n, p, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.chisquare)
+@overload(stubs.numpy.chisquare)
 def dpnp_random_impl(df, size=None):
     name = "chisquare"
     dpnp_lowering.ensure_dpnp(name)
@@ -483,7 +483,7 @@ def dpnp_random_impl(df, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.exponential)
+@overload(stubs.numpy.exponential)
 def dpnp_random_impl(scale=1.0, size=None):
     name = "exponential"
     dpnp_lowering.ensure_dpnp(name)
@@ -523,7 +523,7 @@ def dpnp_random_impl(scale=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.gamma)
+@overload(stubs.numpy.gamma)
 def dpnp_random_impl(shape, scale=1.0, size=None):
     name = "gamma"
     dpnp_lowering.ensure_dpnp(name)
@@ -565,7 +565,7 @@ def dpnp_random_impl(shape, scale=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.geometric)
+@overload(stubs.numpy.geometric)
 def dpnp_random_impl(p, size=None):
     name = "geometric"
     dpnp_lowering.ensure_dpnp(name)
@@ -604,7 +604,7 @@ def dpnp_random_impl(p, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.gumbel)
+@overload(stubs.numpy.gumbel)
 def dpnp_random_impl(loc=0.0, scale=1.0, size=None):
     name = "gumbel"
     dpnp_lowering.ensure_dpnp(name)
@@ -648,7 +648,7 @@ def dpnp_random_impl(loc=0.0, scale=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.hypergeometric)
+@overload(stubs.numpy.hypergeometric)
 def dpnp_random_impl(ngood, nbad, nsample, size=None):
     name = "hypergeometric"
     dpnp_lowering.ensure_dpnp(name)
@@ -701,7 +701,7 @@ def dpnp_random_impl(ngood, nbad, nsample, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.laplace)
+@overload(stubs.numpy.laplace)
 def dpnp_random_impl(loc=0.0, scale=1.0, size=None):
     name = "laplace"
     dpnp_lowering.ensure_dpnp(name)
@@ -745,7 +745,7 @@ def dpnp_random_impl(loc=0.0, scale=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.lognormal)
+@overload(stubs.numpy.lognormal)
 def dpnp_random_impl(mean=0.0, sigma=1.0, size=None):
     name = "lognormal"
     dpnp_lowering.ensure_dpnp(name)
@@ -789,7 +789,7 @@ def dpnp_random_impl(mean=0.0, sigma=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.multinomial)
+@overload(stubs.numpy.multinomial)
 def dpnp_random_impl(n, pvals, size=None):
     name = "multinomial"
     dpnp_lowering.ensure_dpnp(name)
@@ -853,7 +853,7 @@ def dpnp_random_impl(n, pvals, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.multivariate_normal)
+@overload(stubs.numpy.multivariate_normal)
 def dpnp_random_impl(mean, cov, size=None, check_valid="warn", tol=1e-8):
     name = "multivariate_normal"
     dpnp_lowering.ensure_dpnp(name)
@@ -927,7 +927,7 @@ def dpnp_random_impl(mean, cov, size=None, check_valid="warn", tol=1e-8):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.negative_binomial)
+@overload(stubs.numpy.negative_binomial)
 def dpnp_random_impl(n, p, size=None):
     name = "negative_binomial"
     dpnp_lowering.ensure_dpnp(name)
@@ -969,7 +969,7 @@ def dpnp_random_impl(n, p, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.normal)
+@overload(stubs.numpy.normal)
 def dpnp_random_impl(loc=0.0, scale=1.0, size=None):
     name = "normal"
     dpnp_lowering.ensure_dpnp(name)
@@ -1013,7 +1013,7 @@ def dpnp_random_impl(loc=0.0, scale=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.poisson)
+@overload(stubs.numpy.poisson)
 def dpnp_random_impl(lam=1.0, size=None):
     name = "poisson"
     dpnp_lowering.ensure_dpnp(name)
@@ -1053,7 +1053,7 @@ def dpnp_random_impl(lam=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.rayleigh)
+@overload(stubs.numpy.rayleigh)
 def dpnp_random_impl(scale=1.0, size=None):
     name = "rayleigh"
     dpnp_lowering.ensure_dpnp(name)
@@ -1093,7 +1093,7 @@ def dpnp_random_impl(scale=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.standard_cauchy)
+@overload(stubs.numpy.standard_cauchy)
 def dpnp_random_impl(size=None):
     name = "standard_cauchy"
     dpnp_lowering.ensure_dpnp(name)
@@ -1129,7 +1129,7 @@ def dpnp_random_impl(size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.standard_exponential)
+@overload(stubs.numpy.standard_exponential)
 def dpnp_random_impl(size=None):
     name = "standard_exponential"
     dpnp_lowering.ensure_dpnp(name)
@@ -1165,7 +1165,7 @@ def dpnp_random_impl(size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.standard_gamma)
+@overload(stubs.numpy.standard_gamma)
 def dpnp_random_impl(shape, size=None):
     name = "standard_gamma"
     dpnp_lowering.ensure_dpnp(name)
@@ -1204,7 +1204,7 @@ def dpnp_random_impl(shape, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.standard_normal)
+@overload(stubs.numpy.standard_normal)
 def dpnp_random_impl(size=None):
     name = "normal"
     dpnp_lowering.ensure_dpnp("standard_normal")
@@ -1240,7 +1240,7 @@ def dpnp_random_impl(size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.uniform)
+@overload(stubs.numpy.uniform)
 def dpnp_random_impl(low=0.0, high=1.0, size=None):
     name = "uniform"
     dpnp_lowering.ensure_dpnp(name)
@@ -1265,7 +1265,7 @@ def dpnp_random_impl(low=0.0, high=1.0, size=None):
         def dpnp_impl(low=0.0, high=1.0, size=None):
             res = np.empty(1, dtype=res_dtype)
             common_impl(low, high, res, dpnp_func, PRINT_DEBUG)
-            return res
+            return res[0]
 
     else:
 
@@ -1278,7 +1278,7 @@ def dpnp_random_impl(low=0.0, high=1.0, size=None):
     return dpnp_impl
 
 
-@overload(stubs.dpnp.weibull)
+@overload(stubs.numpy.weibull)
 def dpnp_random_impl(a, size=None):
     name = "weibull"
     dpnp_lowering.ensure_dpnp(name)

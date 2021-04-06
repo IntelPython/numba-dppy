@@ -20,6 +20,7 @@ from numba_dppy import config as dppy_config
 from numba_dppy.testing import unittest
 from numba.tests.support import captured_stdout
 import dpctl
+from numba_dppy.context import device_context
 
 
 @unittest.skipUnless(dpctl.has_gpu_queues(), "test only on GPU system")
@@ -35,7 +36,7 @@ class TestOffloadDiagnostics(unittest.TestCase):
 
             return a
 
-        with dpctl.device_context("opencl:gpu"):
+        with device_context("opencl:gpu"):
             dppy_config.OFFLOAD_DIAGNOSTICS = 1
             jitted = njit(parallel=True)(prange_func)
 
@@ -59,7 +60,7 @@ class TestOffloadDiagnostics(unittest.TestCase):
         b = np.array(np.random.random(N), dtype=np.float32)
         c = np.ones_like(a)
 
-        with dpctl.device_context("opencl:gpu"):
+        with device_context("opencl:gpu"):
             dppy_config.OFFLOAD_DIAGNOSTICS = 1
 
             with captured_stdout() as got:

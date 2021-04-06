@@ -17,6 +17,7 @@ import numpy as np
 import numba
 import unittest
 import dpctl
+from numba_dppy.context import device_context
 import warnings
 
 
@@ -36,9 +37,7 @@ class TestDPPYFallback(unittest.TestCase):
 
             return a
 
-        with warnings.catch_warnings(record=True) as w, dpctl.device_context(
-            "opencl:gpu"
-        ):
+        with warnings.catch_warnings(record=True) as w, device_context("opencl:gpu"):
             dppy = numba.njit(inner_call_fallback)
             dppy_result = dppy()
 
@@ -55,9 +54,7 @@ class TestDPPYFallback(unittest.TestCase):
             return b
 
         a = np.ones(10)
-        with warnings.catch_warnings(record=True) as w, dpctl.device_context(
-            "opencl:gpu"
-        ):
+        with warnings.catch_warnings(record=True) as w, device_context("opencl:gpu"):
             dppy = numba.njit(reduction)
             dppy_result = dppy(a)
 

@@ -20,6 +20,7 @@ import numba_dppy as dppy
 import unittest
 from numba.tests.support import captured_stdout
 import dpctl
+from numba_dppy.context import device_context
 
 
 def prange_example():
@@ -36,7 +37,7 @@ def prange_example():
 @unittest.skipUnless(dpctl.has_gpu_queues(), "test only on GPU system")
 class TestParforMessage(unittest.TestCase):
     def test_parfor_message(self):
-        with dpctl.device_context("opencl:gpu") as gpu_queue:
+        with device_context("opencl:gpu") as gpu_queue:
             numba_dppy.compiler.DEBUG = 1
             jitted = njit(prange_example)
 

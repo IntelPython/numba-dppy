@@ -20,7 +20,7 @@ from numba.core import compiler, cpu
 
 import dpctl.dptensor.numpy_usm_shared as usmarray
 import numba_dppy.numpy_usm_shared as nus
-import dpctl
+from numba_dppy.context import device_context
 
 from numba_dppy.compiler import DPPYCompiler
 from numba.core.registry import cpu_target
@@ -47,7 +47,7 @@ def test_no_copy_usm_shared(capfd):
     targetctx = cpu_target.target_context
     args = typingctx.resolve_argument_type(a)
 
-    with dpctl.device_context("opencl:gpu:0"):
+    with device_context("opencl:gpu:0"):
         cres = compiler.compile_extra(
             typingctx=typingctx,
             targetctx=targetctx,

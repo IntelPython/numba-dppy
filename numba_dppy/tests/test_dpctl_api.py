@@ -14,6 +14,8 @@
 
 import pytest
 import dpctl
+from numba_dppy.context import device_context
+from numba_dppy.tests.skip_tests import skip_test
 
 
 list_of_filter_strs = [
@@ -29,7 +31,10 @@ def filter_str(request):
 
 
 def test_dpctl_api(filter_str):
-    with dpctl.device_context(filter_str) as gpu_queue:
+    if skip_test(filter_str):
+        pytest.skip()
+
+    with device_context(filter_str) as gpu_queue:
         dpctl.dump()
         dpctl.get_current_queue()
         dpctl.get_num_platforms()

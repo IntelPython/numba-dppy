@@ -16,7 +16,7 @@
 # limitations under the License.
 ################################################################################
 
-import dpctl
+from numba_dppy.context import device_context
 import numpy as np
 from numba import njit
 import pytest
@@ -104,7 +104,7 @@ def test_trigonometric_fn(filter_str, trig_op, input_arrays):
         def f(a, b):
             return trig_fn(a, b)
 
-        with dpctl.device_context(filter_str):
+        with device_context(filter_str):
             actual = f(a, b)
         expected = trig_fn(a, b)
     else:
@@ -113,7 +113,7 @@ def test_trigonometric_fn(filter_str, trig_op, input_arrays):
         def f(a):
             return trig_fn(a)
 
-        with dpctl.device_context(filter_str):
+        with device_context(filter_str):
             actual = f(a)
         expected = trig_fn(a)
 

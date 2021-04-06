@@ -19,6 +19,7 @@ import time
 import numba_dppy, numba_dppy as dppy
 import unittest
 import dpctl
+from numba_dppy.context import device_context
 
 
 RISKFREE = 0.02
@@ -129,7 +130,7 @@ class TestDPPYBlackScholes(unittest.TestCase):
         blockdim = 512, 1
         griddim = int(math.ceil(float(OPT_N) / blockdim[0])), 1
 
-        with dpctl.device_context("opencl:gpu") as gpu_queue:
+        with device_context("opencl:gpu") as gpu_queue:
             time1 = time.time()
             for i in range(iterations):
                 black_scholes_dppy[blockdim, griddim](

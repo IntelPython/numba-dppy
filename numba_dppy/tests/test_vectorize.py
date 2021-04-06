@@ -16,6 +16,7 @@
 import numpy as np
 from numba import njit, vectorize
 import dpctl
+from numba_dppy.context import device_context
 import unittest
 
 
@@ -40,7 +41,7 @@ class TestVectorize(unittest.TestCase):
         A = np.random.random(10)
         B = np.random.random(10)
 
-        with dpctl.device_context("opencl:gpu"):
+        with device_context("opencl:gpu"):
             expected = f(A, B)
 
         actual = f_np(A, B)

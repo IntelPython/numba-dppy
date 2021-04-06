@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import dpctl
+from numba_dppy.context import device_context
 import numba_dppy as dppy
 import numpy as np
 import pytest
@@ -67,7 +67,7 @@ def test_binary_ops(filter_str, unary_op, input_arrays):
         i = dppy.get_global_id(0)
         b[i] = uop(a[i])
 
-    with dpctl.device_context(filter_str):
+    with device_context(filter_str):
         f[a.size, dppy.DEFAULT_LOCAL_SIZE](a, actual)
 
     expected = np_uop(a)

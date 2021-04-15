@@ -143,8 +143,8 @@ def compile_kernel(sycl_queue, pyfunc, args, access_types, debug=False):
         print("compile_kernel", args)
         debug = True
     if not sycl_queue:
-        # This will be get_current_queue
-        sycl_queue = dpctl.get_current_queue()
+        # We expect the sycl_queue to be provided when this function is called
+        raise ValueError("SYCL queue is required for compiling a kernel")
 
     cres = compile_with_dppy(pyfunc, None, args, debug=debug)
     func = cres.library.get_function(cres.fndesc.llvm_func_name)
@@ -196,6 +196,27 @@ def compile_kernel_parfor(sycl_queue, func_ir, args, args_with_addrspaces, debug
     return oclkern
 
 
+def insert_device_function_typing(typingctx, devfn, function_template):
+    typingctx.insert_user_function(devfn, function_template)
+    # insert it into cpu typing context as well to be discoverable from
+    # @vectorize
+    #typingctx.cpu_context.insert_user_function(devfn, function_template)
+
+def insert_device_function_target(targetctx, devfn, fndesc, libs):
+    targetctx.insert_user_function(devfn, fndesc, libs)
+    # insert it into cpu target context as well to be discoverable from
+    # @vectorize
+    #targetctx.cpu_context.insert_user_function(devfn, fndesc, libs)
+
+def add_device_function_target(targetctx, devfn, fndesc, libs):
+    targetctx.add_user_function(devfn, fndesc, libs)
+    # insert it into cpu target context as well to be discoverable from
+    # @vectorize
+    #targetctx.cpu_context.add_user_function(devfn, fndesc, libs)
+
+
+
+
 def compile_dppy_func(pyfunc, return_type, args, debug=False):
     cres = compile_with_dppy(pyfunc, return_type, args, debug=debug)
     func = cres.library.get_function(cres.fndesc.llvm_func_name)
@@ -206,9 +227,11 @@ def compile_dppy_func(pyfunc, return_type, args, debug=False):
         key = devfn
         cases = [cres.signature]
 
-    cres.typing_context.insert_user_function(devfn, dppy_function_template)
+    #cres.typing_context.insert_user_function(devfn, dppy_function_template)
+    insert_device_function_typing(cres.typing_context, devfn, dppy_function_template)
     libs = [cres.library]
-    cres.target_context.insert_user_function(devfn, cres.fndesc, libs)
+    #cres.target_context.insert_user_function(devfn, cres.fndesc, libs)
+    insert_device_function_target(cres.target_context, devfn, cres.fndesc, libs)
     return devfn
 
 
@@ -227,7 +250,8 @@ def compile_dppy_func_template(pyfunc):
             return dft.compile(args)
 
     typingctx = dppy_target.typing_context
-    typingctx.insert_user_function(dft, dppy_function_template)
+    #typingctx.insert_user_function(dft, dppy_function_template)
+    insert_device_function_typing(typingctx, dft, dppy_function_template)
     return dft
 
 
@@ -256,9 +280,11 @@ class DPPYFunctionTemplate(object):
 
             if first_definition:
                 # First definition
-                cres.target_context.insert_user_function(self, cres.fndesc, libs)
+                #cres.target_context.insert_user_function(self, cres.fndesc, libs)
+                insert_device_function_target(cres.target_context, self, cres.fndesc, libs)
             else:
-                cres.target_context.add_user_function(self, cres.fndesc, libs)
+                #cres.target_context.add_user_function(self, cres.fndesc, libs)
+                add_device_function_target(cres.target_context, self, cres.fndesc, libs)
 
         else:
             cres = self._compileinfos[args]
@@ -359,6 +385,24 @@ class DPPYKernelBase(object):
             ls = _ensure_valid_work_group_size(args[1], gs)
 
         return self.configure(sycl_queue, gs, ls)
+
+def is_device_array(obj):
+    return hasattr(obj.base, "__sycl_usm_array_interface__")
+
+def device_array(shape, dtype):
+    size = 1
+    for i in shape:
+        size *= i
+    usm_buf = dpctl_mem.MemoryUSMShared(size * dtype.itemsize)
+    usm_ndarr = np.ndarray(shape, buffer=usm_buf, dtype=dtype)
+
+    return usm_ndarr
+
+
+def to_device(hostary):
+    usm_ndarr = device_array(hostary.shape, hostary.dtype)
+    np.copyto(usm_ndarr, hostary)
+    return usm_ndarr
 
 
 class DPPYKernel(DPPYKernelBase):
@@ -475,13 +519,12 @@ class DPPYKernel(DPPYKernelBase):
         device_arrs.append(None)
 
         if isinstance(ty, types.Array):
-            if hasattr(val.base, "__sycl_usm_array_interface__"):
+            if is_device_array(val):
                 self._unpack_device_array_argument(val, kernelargs)
             else:
                 default_behavior = self.check_for_invalid_access_type(access_type)
 
-                usm_buf = dpctl_mem.MemoryUSMShared(val.size * val.dtype.itemsize)
-                usm_ndarr = np.ndarray(val.shape, buffer=usm_buf, dtype=val.dtype)
+                usm_ndarr = device_array(val.shape, val.dtype)
 
                 if (
                     default_behavior
@@ -490,7 +533,7 @@ class DPPYKernel(DPPYKernelBase):
                 ):
                     np.copyto(usm_ndarr, val)
 
-                device_arrs[-1] = (usm_buf, usm_ndarr, val)
+                device_arrs[-1] = (None, usm_ndarr, val)
                 self._unpack_device_array_argument(usm_ndarr, kernelargs)
 
         elif ty == types.int64:
@@ -545,32 +588,39 @@ class DPPYKernel(DPPYKernelBase):
 
 
 class JitDPPYKernel(DPPYKernelBase):
-    def __init__(self, func, access_types):
+    def __init__(self, func, debug, access_types):
 
         super(JitDPPYKernel, self).__init__()
 
         self.py_func = func
         self.definitions = {}
+        self.debug = debug
         self.access_types = access_types
 
         from .descriptor import dppy_target
 
         self.typingctx = dppy_target.typing_context
 
+    def get_argtypes(self, *args):
+        # Convenience function to get the type of each argument.
+        return tuple([self.typingctx.resolve_argument_type(a) for a in args])
+
     def __call__(self, *args, **kwargs):
         assert not kwargs, "Keyword Arguments are not supported"
-        if self.sycl_queue is None:
-            try:
-                self.sycl_queue = dpctl.get_current_queue()
-            except:
-                _raise_no_device_found_error()
+        try:
+            current_queue = dpctl.get_current_queue()
+        except:
+            _raise_no_device_found_error()
 
-        kernel = self.specialize(*args)
+        argtypes = self.get_argtypes(*args)
+        kernel = self.specialize(argtypes, current_queue)
         cfg = kernel.configure(self.sycl_queue, self.global_size, self.local_size)
         cfg(*args)
 
-    def specialize(self, *args):
-        argtypes = tuple([self.typingctx.resolve_argument_type(a) for a in args])
+    def specialize(self, argtypes, queue):
+        # We specialize for argtypes and queue. These two are used as key for
+        # caching as well.
+        assert queue is not None
         q = None
         kernel = None
         # we were previously using the _env_ptr of the device_env, the sycl_queue
@@ -582,11 +632,9 @@ class JitDPPYKernel(DPPYKernelBase):
         if result:
             q, kernel = result
 
-        if q and self.sycl_queue.equals(q):
+        if q and queue.equals(q):
             return kernel
         else:
-            kernel = compile_kernel(
-                self.sycl_queue, self.py_func, argtypes, self.access_types
-            )
-            self.definitions[key_definitions] = (self.sycl_queue, kernel)
+            kernel = compile_kernel(queue, self.py_func, argtypes, self.access_types)
+            self.definitions[key_definitions] = (queue, kernel)
         return kernel

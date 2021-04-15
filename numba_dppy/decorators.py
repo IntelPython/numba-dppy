@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function, absolute_import, division
 from numba.core import sigutils, types
 from .compiler import (
     compile_kernel,
@@ -20,41 +19,44 @@ from .compiler import (
     compile_dppy_func_template,
     compile_dppy_func,
     get_ordered_arg_access_types,
+    get_sycl_queue,
 )
 
 
-def kernel(signature=None, access_types=None, debug=False):
+def kernel(signature=None, access_types=None, debug=False, queue=None):
     """JIT compile a python function conforming using the DPPY backend.
 
     A kernel is equvalent to an OpenCL kernel function, and has the
     same restrictions as definined by SPIR_KERNEL calling convention.
     """
     if signature is None:
-        return autojit(debug=False, access_types=access_types)
+        return autojit(debug=False, access_types=access_types, queue=queue)
     elif not sigutils.is_signature(signature):
         func = signature
-        return autojit(debug=False, access_types=access_types)(func)
+        return autojit(debug=False, access_types=access_types, queue=queue)(func)
     else:
-        return _kernel_jit(signature, debug, access_types)
+        return _kernel_jit(signature, debug, access_types, queue=queue)
 
 
-def autojit(debug=False, access_types=None):
+def autojit(debug=False, access_types=None, queue=None):
     def _kernel_autojit(pyfunc):
+        q = get_sycl_queue(queue)
         ordered_arg_access_types = get_ordered_arg_access_types(pyfunc, access_types)
-        return JitDPPYKernel(pyfunc, ordered_arg_access_types)
+        return JitDPPYKernel(pyfunc, ordered_arg_access_types, q)
 
     return _kernel_autojit
 
 
-def _kernel_jit(signature, debug, access_types):
+def _kernel_jit(signature, debug, access_types, queue=None):
     argtypes, restype = sigutils.normalize_signature(signature)
     if restype is not None and restype != types.void:
         msg = "DPPY kernel must have void return type but got {restype}"
         raise TypeError(msg.format(restype=restype))
 
     def _wrapped(pyfunc):
+        q = get_sycl_queue(queue)
         ordered_arg_access_types = get_ordered_arg_access_types(pyfunc, access_types)
-        return compile_kernel(None, pyfunc, argtypes, ordered_arg_access_types, debug)
+        return compile_kernel(q, pyfunc, argtypes, ordered_arg_access_types, debug)
 
     return _wrapped
 

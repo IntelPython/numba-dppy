@@ -32,8 +32,12 @@ requirements:
         - dpnp >=0.5.1,<0.6.*  # [linux]
 
 test:
-  requires:
-    - pytest
+    requires:
+        - pytest
+        - pytest-cov
+    source_files:
+        - .coveragerc
+
 
 about:
     home: https://github.com/IntelPython/numba-dppy
